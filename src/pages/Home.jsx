@@ -1,0 +1,79 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { ShoppingBag } from 'lucide-react';
+
+const Home = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
+
+  useEffect(() => {
+    axios.get(import.meta.env.VITE_API_URL + '/api/products')
+      .then(res => {
+        setProducts(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching products:', err);
+        setFetchError('Unable to load products. Is the backend server running?');
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <div className="page-enter">
+      {/* Hero Section */}
+      <div className="glass-panel text-center" style={{ padding: '4rem 2rem', marginBottom: '3rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <h1 style={{ fontSize: '3rem', fontWeight: 700, marginBottom: '1rem', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Curated Vintage & Thrift
+          </h1>
+          <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
+            Discover unique, high-quality pre-loved fashion. Sustainable style for the modern wardrobe.
+          </p>
+          <button className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+            <ShoppingBag size={20} />
+            Shop Collection
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ fontSize: '2rem', fontWeight: 600 }}>Latest Drops</h2>
+      </div>
+
+      {loading ? (
+        <div className="text-center mt-8">
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem' }}>Loading fresh styles...</p>
+        </div>
+      ) : fetchError ? (
+        <div className="text-center mt-8">
+          <p style={{ color: 'var(--danger-color)', fontSize: '1.2rem' }}>{fetchError}</p>
+        </div>
+      ) : (
+        <div className="product-grid">
+          {products.map((product) => (
+            <Link to={`/product/${product._id}`} key={product._id} className="glass-panel product-card">
+              <img src={product.images?.[0] || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=500'} alt={product.name} className="product-image" />
+              <div className="product-info">
+                <span style={{ fontSize: '0.8rem', color: 'var(--accent-color)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.5rem', fontWeight: 600 }}>
+                  {product.category}
+                </span>
+                <h3 className="product-title">{product.name}</h3>
+                <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <span className="product-price">₹{product.price}</span>
+                  <button className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                    View
+                  </button>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Home;
