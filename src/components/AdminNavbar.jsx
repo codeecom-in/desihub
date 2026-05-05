@@ -3,7 +3,7 @@ import { Package, Users, Settings, LogOut } from 'lucide-react';
 
 const AdminNavbar = () => {
   return (
-    <nav className="navbar" style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--accent-color)' }}>
+    <nav className="navbar" style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--accent-color)' }}>
       <Link to="/admin" className="navbar-brand" style={{ color: 'var(--accent-color)', background: 'none', WebkitTextFillColor: 'initial' }}>
         DesiThrift Admin
       </Link>

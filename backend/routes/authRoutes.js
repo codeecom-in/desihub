@@ -1,6 +1,7 @@
 const express = require('express');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
+const crypto = require('crypto');
 const User = require('../models/User');
 
 const router = express.Router();
@@ -117,6 +118,107 @@ router.post('/login-totp', async (req, res) => {
   } catch (error) {
     console.error('TOTP login error:', error);
     res.status(500).json({ success: false, message: 'Login failed.' });
+  }
+});
+
+// Magic Link Login: Request Link
+router.post('/request-magic-link', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ success: false, message: 'Email is required.' });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found. You must be added as an admin first.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    user.magicLinkToken = token;
+    user.magicLinkExpires = Date.now() + 15 * 60 * 1000; // 15 mins expiry
+    await user.save();
+
+    // The frontend URL they should click
+    // Note: FRONTEND_URL environment variable needs to be set in production
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const magicLink = `${frontendUrl}/verify-login?token=${token}&email=${email}`;
+
+    // For now, since no email transport is set up natively, we'll log it out to the console.
+    // Real email sending goes here using Nodemailer or Resend
+    console.log(`\n\n=== MAGIC LINK FOR ${email} ===\n${magicLink}\n=================================\n\n`);
+
+    res.json({
+      success: true,
+      message: 'Magic link sent! (Check server console if email is not configured)'
+    });
+  } catch (error) {
+    console.error('Error requesting magic link:', error);
+    res.status(500).json({ success: false, message: 'Failed to request magic link.' });
+  }
+});
+
+// Magic Link Login: Verify Link
+router.post('/verify-magic-link', async (req, res) => {
+  const { email, token } = req.body;
+  if (!email || !token) return res.status(400).json({ success: false, message: 'Email and token are required.' });
+
+  try {
+    const user = await User.findOne({ 
+      email, 
+      magicLinkToken: token,
+      magicLinkExpires: { $gt: Date.now() } // Ensure token is not expired
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired magic link.' });
+    }
+
+    // Clear the token
+    user.magicLinkToken = undefined;
+    user.magicLinkExpires = undefined;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Login successful.',
+      user: { email: user.email, role: user.role }
+    });
+  } catch (error) {
+    console.error('Error verifying magic link:', error);
+    res.status(500).json({ success: false, message: 'Failed to verify magic link.' });
+  }
+});
+
+// Master Admin: Create Admin
+router.post('/create-admin', async (req, res) => {
+  // In a real app you'd verify JWT session here. 
+  // For now we'll require the master admin email to be passed in to verify intent.
+  const { masterEmail, newAdminEmail } = req.body;
+  
+  if (!masterEmail || !newAdminEmail) {
+    return res.status(400).json({ success: false, message: 'Both masterEmail and newAdminEmail are required.' });
+  }
+
+  try {
+    const master = await User.findOne({ email: masterEmail, role: 'master_admin' });
+    if (!master) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Only master admin can perform this action.' });
+    }
+
+    const existingUser = await User.findOne({ email: newAdminEmail });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'User already exists.' });
+    }
+
+    const newAdmin = new User({ email: newAdminEmail, role: 'admin' });
+    await newAdmin.save();
+
+    res.json({
+      success: true,
+      message: 'Admin created successfully. They can now login using a magic link.'
+    });
+  } catch (error) {
+    console.error('Error creating admin:', error);
+    res.status(500).json({ success: false, message: 'Failed to create admin.' });
   }
 });
 

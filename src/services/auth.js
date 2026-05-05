@@ -31,3 +31,29 @@ export const loginWithTotp = async (phone, token) => {
   return response.json();
 };
 
+export const requestMagicLink = async (email) => {
+  const response = await fetch(`${API_URL}/api/auth/request-magic-link`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify({ email })
+  });
+  return response.json();
+};
+
+export const verifyMagicLink = async (email, token) => {
+  const response = await fetch(`${API_URL}/api/auth/verify-magic-link`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify({ email, token })
+  });
+  return response.json();
+};
+
+export const createAdmin = async (masterEmail, newAdminEmail) => {
+  const response = await fetch(`${API_URL}/api/auth/create-admin`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify({ masterEmail, newAdminEmail })
+  });
+  return response.json();
+};

@@ -75,8 +75,8 @@ const Navbar = () => {
               <div className="glass-panel" style={{ position: 'absolute', top: '100%', right: 0, width: '256px', zIndex: 50, marginTop: '0.5rem' }}>
                 <div style={{ padding: '1rem' }}>
                   {/* Profile Image */}
-                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                    <div style={{ width: '64px', height: '64px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ textAlign: 'center', margin-bottom: '1rem' }}>
+                    <div style={{ width: '64px', height: '64px', background: 'var(--bg-secondary)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                       {user?.profileImage ? (
                         <img src={user.profileImage} alt="Profile" style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' }} />
                       ) : (
@@ -94,7 +94,7 @@ const Navbar = () => {
                           type="text"
                           value={tempName}
                           onChange={(e) => setTempName(e.target.value)}
-                          style={{ flex: 1, padding: '0.5rem', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid var(--border-color)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.875rem' }}
+                          style={{ flex: 1, padding: '0.5rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '0.875rem' }}
                           placeholder="Enter your name"
                         />
                         <button onClick={handleSaveName} style={{ color: 'var(--success-color)', background: 'transparent', border: 'none', cursor: 'pointer' }}>

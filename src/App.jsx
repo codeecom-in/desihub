@@ -4,6 +4,7 @@ import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
+import VerifyLogin from './pages/VerifyLogin';
 import Orders from './pages/Orders';
 import ProfileAddress from './pages/ProfileAddress';
 import AdminDashboard from './admin/AdminDashboard';
@@ -47,6 +48,10 @@ const router = createBrowserRouter(
     {
       path: '/login',
       element: <Layout><Login /></Layout>
+    },
+    {
+      path: '/verify-login',
+      element: <Layout><VerifyLogin /></Layout>
     },
     {
       path: '/orders',

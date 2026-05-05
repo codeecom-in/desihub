@@ -35,12 +35,12 @@ const Cart = () => {
                 <p style={{ color: 'var(--accent-color)', fontWeight: 700 }}>₹{item.price}</p>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem', borderRadius: '50px' }}>
-                <button onClick={() => updateQuantity(item._id, Math.max(1, item.quantity - 1))} style={{ background: 'transparent', color: 'white', padding: '0.2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(0,0,0,0.05)', padding: '0.5rem', borderRadius: '50px' }}>
+                <button onClick={() => updateQuantity(item._id, Math.max(1, item.quantity - 1))} style={{ background: 'transparent', color: 'var(--text-primary)', padding: '0.2rem' }}>
                   <Minus size={16} />
                 </button>
                 <span style={{ width: '20px', textAlign: 'center' }}>{item.quantity}</span>
-                <button onClick={() => updateQuantity(item._id, item.quantity + 1)} style={{ background: 'transparent', color: 'white', padding: '0.2rem' }}>
+                <button onClick={() => updateQuantity(item._id, item.quantity + 1)} style={{ background: 'transparent', color: 'var(--text-primary)', padding: '0.2rem' }}>
                   <Plus size={16} />
                 </button>
               </div>

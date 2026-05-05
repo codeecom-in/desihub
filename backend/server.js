@@ -28,8 +28,20 @@ app.use(express.json());
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/thrift-store', {
   useNewUrlParser: true,
   useUnifiedTopology: true
-}).then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log(err));
+}).then(async () => {
+  console.log('MongoDB Connected');
+  // Seed master admin
+  const User = require('./models/User');
+  try {
+    const masterAdmin = await User.findOne({ email: 'muhammadroshan902@gmail.com' });
+    if (!masterAdmin) {
+      await User.create({ email: 'muhammadroshan902@gmail.com', role: 'master_admin' });
+      console.log('Master admin account created automatically.');
+    }
+  } catch (err) {
+    console.error('Error seeding master admin:', err);
+  }
+}).catch(err => console.log(err));
 
 // Razorpay Instance
 const razorpay = new Razorpay({
