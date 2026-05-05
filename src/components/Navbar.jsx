@@ -75,7 +75,7 @@ const Navbar = () => {
               <div className="glass-panel" style={{ position: 'absolute', top: '100%', right: 0, width: '256px', zIndex: 50, marginTop: '0.5rem' }}>
                 <div style={{ padding: '1rem' }}>
                   {/* Profile Image */}
-                  <div style={{ textAlign: 'center', margin-bottom: '1rem' }}>
+                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
                     <div style={{ width: '64px', height: '64px', background: 'var(--bg-secondary)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                       {user?.profileImage ? (
                         <img src={user.profileImage} alt="Profile" style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' }} />
