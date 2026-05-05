@@ -21,13 +21,6 @@ const Login = () => {
 
   const normalizePhoneNumber = (value) => {
     const digits = value.replace(/\D/g, '');
-    if (!digits) return '';
-    if (value.trim().startsWith('+')) {
-      return `+${digits}`;
-    }
-    if (digits.startsWith('91')) {
-      return `+${digits}`;
-    }
     return `+91${digits}`;
   };
 
@@ -125,7 +118,7 @@ const Login = () => {
     try {
       const result = await requestMagicLink(email);
       if (!result.success) {
-        setError(result.message || 'Failed to request magic link.');
+        setError(result.error ? `Server Error: ${result.error}` : (result.message || 'Failed to request magic link.'));
       } else {
         setStep('admin_sent');
         setSuccessMessage('Magic link sent! Check your email (or server console for local testing).');
@@ -189,16 +182,23 @@ const Login = () => {
           <form onSubmit={handlePhoneSubmit}>
             <div className="input-group">
               <label className="input-label" htmlFor="login-phone-number">Phone Number</label>
-              <input
-                id="login-phone-number"
-                name="phoneNumber"
-                type="tel"
-                className="input-field"
-                placeholder="+91 99999 99999"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                required
-              />
+              <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 1rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRight: 'none', borderRadius: '8px 0 0 8px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                  +91
+                </div>
+                <input
+                  id="login-phone-number"
+                  name="phoneNumber"
+                  type="tel"
+                  className="input-field"
+                  style={{ borderRadius: '0 8px 8px 0' }}
+                  placeholder="99999 99999"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  required
+                  maxLength={10}
+                />
+              </div>
             </div>
             <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '0.5rem', padding: '1rem' }} disabled={loading}>
               {loading ? 'Setting up...' : 'Setup Google Authenticator'}

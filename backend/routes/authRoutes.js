@@ -152,7 +152,7 @@ router.post('/request-magic-link', async (req, res) => {
     });
   } catch (error) {
     console.error('Error requesting magic link:', error);
-    res.status(500).json({ success: false, message: 'Failed to request magic link.' });
+    res.status(500).json({ success: false, message: 'Failed to request magic link.', error: error.message, stack: error.stack });
   }
 });
 
