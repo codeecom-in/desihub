@@ -1,21 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setupTotp, verifyTotpSetup, loginWithTotp } from '../services/auth';
+import { sendOTP, verifyOTP } from '../services/auth';
 import { useAuth } from '../context/AuthContext';
-import { Phone, Lock, QrCode, Mail, ShieldAlert } from 'lucide-react';
+import { Phone, Lock, Mail, ShieldAlert, MessageSquare } from 'lucide-react';
 import { requestMagicLink } from '../services/auth';
 
 const Login = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [totpToken, setTotpToken] = useState('');
-  const [step, setStep] = useState('phone'); // 'phone', 'setup', 'login', 'admin_email', 'admin_sent'
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState('phone'); // 'phone', 'otp', 'admin_email', 'admin_sent'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [qrCode, setQrCode] = useState('');
-  const [secret, setSecret] = useState('');
   const [email, setEmail] = useState('');
   const [loginMode, setLoginMode] = useState('user'); // 'user' or 'admin'
+  const [confirmationResult, setConfirmationResult] = useState(null);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -38,66 +37,45 @@ const Login = () => {
     }
 
     try {
-      const result = await setupTotp(formattedPhone);
+      const result = await sendOTP(formattedPhone);
       if (!result.success) {
-        setError(result.message || 'Unable to setup TOTP. Please try again.');
+        setError(result.message || 'Unable to send OTP. Please try again.');
       } else {
-        setQrCode(result.qrCode);
-        setSecret(result.secret);
-        setStep('setup');
-        setSuccessMessage('Scan the QR code with Google Authenticator app.');
+        setConfirmationResult(result.confirmationResult);
+        setStep('otp');
+        setSuccessMessage('OTP sent to your phone. Please enter the 6-digit code.');
       }
     } catch (err) {
-      console.error('TOTP setup error:', err);
-      setError(err?.message || 'Unable to setup TOTP. Please try again.');
+      console.error('OTP send error:', err);
+      setError(err?.message || 'Unable to send OTP. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTotpSetup = async (e) => {
+  const handleOtpSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const formattedPhone = normalizePhoneNumber(phoneNumber);
-
-    try {
-      const result = await verifyTotpSetup(formattedPhone, totpToken);
-      if (!result.success) {
-        setError(result.message || 'Invalid TOTP token. Please try again.');
-      } else {
-        setStep('login');
-        setSuccessMessage('TOTP setup complete! You can now login.');
-        setTotpToken('');
-      }
-    } catch (err) {
-      console.error('TOTP setup verification error:', err);
-      setError('Invalid TOTP token. Please try again.');
-    } finally {
+    if (!confirmationResult) {
+      setError('Please request OTP first.');
       setLoading(false);
+      return;
     }
-  };
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    const formattedPhone = normalizePhoneNumber(phoneNumber);
 
     try {
-      const result = await loginWithTotp(formattedPhone, totpToken);
+      const result = await verifyOTP(confirmationResult, otp);
       if (!result.success) {
-        setError(result.message || 'Invalid TOTP token. Please try again.');
+        setError(result.message || 'Invalid OTP. Please try again.');
       } else {
         // Set user in auth context
         login(result.user);
         navigate('/');
       }
     } catch (err) {
-      console.error('TOTP login error:', err);
-      setError('Invalid TOTP token. Please try again.');
+      console.error('OTP verification error:', err);
+      setError('Invalid OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -134,9 +112,8 @@ const Login = () => {
   const resetToPhone = () => {
     setStep(loginMode === 'user' ? 'phone' : 'admin_email');
     setPhoneNumber('');
-    setTotpToken('');
-    setQrCode('');
-    setSecret('');
+    setOtp('');
+    setConfirmationResult(null);
     setError('');
     setSuccessMessage('');
   };
@@ -161,17 +138,16 @@ const Login = () => {
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ display: 'inline-flex', padding: '1rem', background: loginMode === 'admin' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)', borderRadius: '50%', color: loginMode === 'admin' ? 'var(--danger-color)' : 'var(--accent-color)', marginBottom: '1rem' }}>
-            {loginMode === 'admin' ? <ShieldAlert size={32} /> : step === 'setup' ? <QrCode size={32} /> : <Lock size={32} />}
+            {loginMode === 'admin' ? <ShieldAlert size={32} /> : step === 'otp' ? <MessageSquare size={32} /> : <Lock size={32} />}
           </div>
           <h2 style={{ fontSize: '2rem', fontWeight: 700 }}>
-            {loginMode === 'admin' ? 'Admin Access' : step === 'phone' ? 'Setup Google Authenticator' : step === 'setup' ? 'Scan QR Code' : 'Login with TOTP'}
+            {loginMode === 'admin' ? 'Admin Access' : step === 'phone' ? 'Phone Login' : 'Enter OTP'}
           </h2>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
             {loginMode === 'admin' && step === 'admin_email' && 'Enter your admin email to receive a magic link'}
             {loginMode === 'admin' && step === 'admin_sent' && 'Check your email for the login link'}
-            {loginMode === 'user' && step === 'phone' && 'Enter your phone number to setup Google Authenticator'}
-            {loginMode === 'user' && step === 'setup' && 'Scan this QR code with Google Authenticator app'}
-            {loginMode === 'user' && step === 'login' && 'Enter the 6-digit code from Google Authenticator'}
+            {loginMode === 'user' && step === 'phone' && 'Enter your phone number to receive OTP'}
+            {loginMode === 'user' && step === 'otp' && 'Enter the 6-digit OTP sent to your phone'}
           </p>
         </div>
 
@@ -201,60 +177,30 @@ const Login = () => {
               </div>
             </div>
             <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '0.5rem', padding: '1rem' }} disabled={loading}>
-              {loading ? 'Setting up...' : 'Setup Google Authenticator'}
+              {loading ? 'Sending OTP...' : 'Send OTP'}
             </button>
           </form>
         )}
 
-        {step === 'setup' && (
-          <>
-            {qrCode && (
-              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <img src={qrCode} alt="QR Code" style={{ maxWidth: '200px', width: '100%' }} />
-              </div>
-            )}
-            <form onSubmit={handleTotpSetup}>
-              <div className="input-group">
-                <label className="input-label" htmlFor="totp-token">Enter TOTP Code</label>
-                <input
-                  id="totp-token"
-                  name="totpToken"
-                  type="text"
-                  className="input-field"
-                  placeholder="000000"
-                  value={totpToken}
-                  onChange={(e) => setTotpToken(e.target.value)}
-                  required
-                  maxLength={6}
-                  style={{ letterSpacing: '0.5rem', textAlign: 'center', fontSize: '1.25rem', fontWeight: 600 }}
-                />
-              </div>
-              <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '0.5rem', padding: '1rem' }} disabled={loading}>
-                {loading ? 'Verifying...' : 'Verify & Enable TOTP'}
-              </button>
-            </form>
-          </>
-        )}
-
-        {loginMode === 'user' && step === 'login' && (
-          <form onSubmit={handleLogin}>
+        {step === 'otp' && (
+          <form onSubmit={handleOtpSubmit}>
             <div className="input-group">
-              <label className="input-label" htmlFor="login-totp">6-digit TOTP Code</label>
+              <label className="input-label" htmlFor="otp-code">6-digit OTP</label>
               <input
-                id="login-totp"
-                name="totpToken"
+                id="otp-code"
+                name="otp"
                 type="text"
                 className="input-field"
                 placeholder="000000"
-                value={totpToken}
-                onChange={(e) => setTotpToken(e.target.value)}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
                 required
                 maxLength={6}
                 style={{ letterSpacing: '0.5rem', textAlign: 'center', fontSize: '1.25rem', fontWeight: 600 }}
               />
             </div>
             <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '0.5rem', padding: '1rem' }} disabled={loading}>
-              {loading ? 'Logging in...' : 'Login with TOTP'}
+              {loading ? 'Verifying...' : 'Verify & Login'}
             </button>
           </form>
         )}
@@ -299,6 +245,9 @@ const Login = () => {
           </div>
         )}
       </div>
+
+      {/* reCAPTCHA container for Firebase */}
+      <div id="recaptcha-container"></div>
     </div>
   );
 };

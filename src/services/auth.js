@@ -1,34 +1,36 @@
+import { sendPhoneOTP, setupRecaptcha } from './firebase.js';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const buildHeaders = () => ({
   'Content-Type': 'application/json'
 });
 
-export const setupTotp = async (phone) => {
-  const response = await fetch(`${API_URL}/api/auth/setup-totp`, {
-    method: 'POST',
-    headers: buildHeaders(),
-    body: JSON.stringify({ phone })
-  });
-  return response.json();
+export const sendOTP = async (phoneNumber) => {
+  try {
+    const container = document.getElementById('recaptcha-container');
+    if (!container) {
+      throw new Error('reCAPTCHA container not found');
+    }
+
+    const appVerifier = setupRecaptcha(container);
+    const confirmationResult = await sendPhoneOTP(phoneNumber, appVerifier);
+    return { success: true, confirmationResult };
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    return { success: false, message: error.message };
+  }
 };
 
-export const verifyTotpSetup = async (phone, token) => {
-  const response = await fetch(`${API_URL}/api/auth/verify-totp-setup`, {
-    method: 'POST',
-    headers: buildHeaders(),
-    body: JSON.stringify({ phone, token })
-  });
-  return response.json();
-};
-
-export const loginWithTotp = async (phone, token) => {
-  const response = await fetch(`${API_URL}/api/auth/login-totp`, {
-    method: 'POST',
-    headers: buildHeaders(),
-    body: JSON.stringify({ phone, token })
-  });
-  return response.json();
+export const verifyOTP = async (confirmationResult, otp) => {
+  try {
+    const result = await confirmationResult.confirm(otp);
+    const user = result.user;
+    return { success: true, user: { phone: user.phoneNumber, uid: user.uid } };
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    return { success: false, message: error.message };
+  }
 };
 
 export const requestMagicLink = async (email) => {

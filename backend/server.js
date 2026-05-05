@@ -42,7 +42,12 @@ app.use(cors({
 app.use(express.json());
 
 // Database Connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/thrift-store', {
+const mongoUri = process.env.MONGO_URI;
+if (!mongoUri) {
+  console.error('FATAL: MONGO_URI is not configured. Set MONGO_URI in your environment for production.');
+  process.exit(1);
+}
+mongoose.connect(mongoUri, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(async () => {
@@ -58,7 +63,10 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/thrift-stor
   } catch (err) {
     console.error('Error seeding master admin:', err);
   }
-}).catch(err => console.log(err));
+}).catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1);
+});
 
 // Razorpay Instance
 const razorpay = new Razorpay({
