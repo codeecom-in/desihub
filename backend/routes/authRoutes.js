@@ -2,6 +2,7 @@ const express = require('express');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const User = require('../models/User');
 
 const router = express.Router();
@@ -142,13 +143,37 @@ router.post('/request-magic-link', async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const magicLink = `${frontendUrl}/verify-login?token=${token}&email=${email}`;
 
-    // For now, since no email transport is set up natively, we'll log it out to the console.
-    // Real email sending goes here using Nodemailer or Resend
-    console.log(`\n\n=== MAGIC LINK FOR ${email} ===\n${magicLink}\n=================================\n\n`);
+    // Send email using Nodemailer
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const mailOptions = {
+      from: `"DesiHub Admin" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Your Magic Login Link - DesiHub',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Login to DesiHub Admin</h2>
+          <p>Click the secure link below to log into your account. This link will expire in 15 minutes.</p>
+          <a href="${magicLink}" style="padding: 12px 24px; background-color: #000000; color: white; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 15px;">Log In Now</a>
+          <br><br>
+          <p style="font-size: 12px; color: #666;">If the button doesn't work, copy and paste this URL into your browser:</p>
+          <p style="font-size: 12px; color: #0066cc; word-break: break-all;">${magicLink}</p>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Magic link officially emailed to ${email}`);
 
     res.json({
       success: true,
-      message: 'Magic link sent! (Check server console if email is not configured)'
+      message: 'Magic link sent! Check your email inbox.'
     });
   } catch (error) {
     console.error('Error requesting magic link:', error);
