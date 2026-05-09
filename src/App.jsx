@@ -15,6 +15,20 @@ import { CartProvider } from './context/CartContext';
 import { useAuth } from './context/AuthContext';
 import './index.css';
 
+const Layout = ({ children }) => {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  return (
+    <div className="app-container">
+      {isAdmin ? <AdminNavbar /> : <Navbar />}
+      <main className="main-content" style={{ padding: isAdmin ? '2rem 1rem' : '2rem' }}>
+        {children}
+      </main>
+    </div>
+  );
+};
+
 const ProtectedAdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
