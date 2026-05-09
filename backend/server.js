@@ -8,13 +8,11 @@ const path = require('path');
 
 const app = express();
 
-const razorpayKeyId = process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY;
-const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET;
+const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
+const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
 console.log('Razorpay env debug:', {
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
-  RAZORPAY_KEY: process.env.RAZORPAY_KEY,
-  hasSecret: Boolean(process.env.RAZORPAY_KEY_SECRET),
-  hasSecretLegacy: Boolean(process.env.RAZORPAY_SECRET),
+  RAZORPAY_KEY_SECRET_CONFIGURED: Boolean(process.env.RAZORPAY_KEY_SECRET),
   envKeys: Object.keys(process.env).filter((key) => key.startsWith('RAZORPAY'))
 });
 if (!razorpayKeyId || !razorpayKeySecret) {
@@ -97,6 +95,7 @@ app.get('/', (req, res) => {
 const createOrderHandler = async (req, res) => {
   console.log('/api/create-order request headers:', req.headers);
   console.log('/api/create-order req.user:', req.user || null);
+  console.log('/api/create-order body:', req.body);
   console.log('/api/create-order key id used:', razorpayKeyId ? 'configured' : 'missing');
 
   try {
@@ -109,11 +108,20 @@ const createOrderHandler = async (req, res) => {
     }
 
     const { amount } = req.body;
-    if (amount == null || isNaN(amount)) {
+    console.log('/api/create-order amount raw:', amount);
+
+    if (amount == null || amount === '' || isNaN(amount)) {
       return res.status(400).json({ success: false, message: 'Amount is required and must be a number.' });
     }
 
-    const amountPaise = Math.round(Number(amount) * 100);
+    const parsedAmount = Number(amount);
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Amount must be a positive number.' });
+    }
+
+    const amountPaise = Math.round(parsedAmount * 100);
+    console.log('/api/create-order amountPaise:', amountPaise);
+
     if (amountPaise < 100) {
       return res.status(400).json({ success: false, message: 'Minimum amount is ₹1 (100 paise).' });
     }
@@ -124,14 +132,17 @@ const createOrderHandler = async (req, res) => {
       receipt: `receipt_order_${Date.now()}`,
       payment_capture: 1
     };
+    console.log('/api/create-order options:', options);
 
     const order = await razorpay.orders.create(options);
-    return res.status(200).json(order);
+    console.log('/api/create-order razorpay order:', order);
+    return res.status(200).json({ success: true, order });
   } catch (error) {
     console.error('Razorpay create order error:', error);
+    console.error('Razorpay create order stack:', error.stack);
     const status = error.statusCode || 500;
     const message = error.error?.description || error.error?.message || error.message || 'Order creation failed';
-    return res.status(status).json({ message, error: error.error || error });
+    return res.status(status).json({ success: false, message, error: error.error || error });
   }
 };
 
