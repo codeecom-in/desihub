@@ -86,10 +86,10 @@ const Checkout = () => {
   }
 
   return (
-    <div className="page-enter" style={{ maxWidth: '600px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '2rem', textAlign: 'center' }}>Checkout</h1>
+    <div className="page-enter checkout-container">
+      <h1 style={{ fontSize: 'clamp(1.75rem, 5vw, 2rem)', fontWeight: 700, marginBottom: '2rem', textAlign: 'center' }}>Checkout</h1>
       
-      <div className="glass-panel" style={{ padding: '2rem' }}>
+      <div className="glass-panel" style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}>
         <form onSubmit={handlePayment}>
           <div className="input-group">
             <label className="input-label" htmlFor="checkout-name">Full Name</label>
@@ -107,7 +107,7 @@ const Checkout = () => {
             <label className="input-label" htmlFor="checkout-address">Delivery Address</label>
             <textarea id="checkout-address" name="address" className="input-field" rows="3" required onChange={handleChange}></textarea>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="checkout-form-grid">
             <div className="input-group">
               <label className="input-label" htmlFor="checkout-city">City</label>
               <input id="checkout-city" type="text" name="city" className="input-field" required onChange={handleChange} />
@@ -119,7 +119,7 @@ const Checkout = () => {
           </div>
           
           <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: 'var(--glass-border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 600, marginBottom: '1.5rem' }}>
+            <div className="checkout-total" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 600, marginBottom: '1.5rem' }}>
               <span>Total Amount to Pay:</span>
               <span style={{ color: 'var(--accent-color)' }}>₹{total}</span>
             </div>

@@ -24,23 +24,23 @@ const Home = () => {
   return (
     <div className="page-enter">
       {/* Hero Section */}
-      <div className="glass-panel text-center" style={{ padding: '4rem 2rem', marginBottom: '3rem', position: 'relative', overflow: 'hidden' }}>
+      <div className="hero-section glass-panel text-center" style={{ padding: '4rem 2rem', marginBottom: '3rem', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <h1 style={{ fontSize: '3rem', fontWeight: 700, marginBottom: '1rem', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <h1 className="hero-title" style={{ fontSize: 'clamp(2rem, 8vw, 3rem)', fontWeight: 700, marginBottom: '1rem', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             Curated Vintage & Thrift
           </h1>
-          <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
+          <p className="hero-subtitle" style={{ fontSize: 'clamp(1rem, 4vw, 1.2rem)', color: 'var(--text-secondary)', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem auto' }}>
             Discover unique, high-quality pre-loved fashion. Sustainable style for the modern wardrobe.
           </p>
-          <button className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+          <button className="btn-primary hero-btn" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: 'clamp(1rem, 3vw, 1.1rem)' }}>
             <ShoppingBag size={20} />
             Shop Collection
           </button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ fontSize: '2rem', fontWeight: 600 }}>Latest Drops</h2>
+      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2 className="section-title" style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)', fontWeight: 600 }}>Latest Drops</h2>
       </div>
 
       {loading ? (

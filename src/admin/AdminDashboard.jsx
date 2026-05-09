@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Package, TrendingUp, Users, DollarSign, Plus, Edit, Trash2, Shield } from 'lucide-react';
+import { Package, TrendingUp, Users, DollarSign, Plus, Edit, Trash2, Shield, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createAdmin } from '../services/auth';
 
@@ -118,10 +118,10 @@ const AdminDashboard = () => {
       </div>
       
       {/* Top Stats Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+      <div className="admin-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
         {stats.map((stat, idx) => (
-          <div key={idx} className="glass-panel" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '1rem', background: 'rgba(0,0,0,0.05)', borderRadius: '12px', color: stat.color }}>
+          <div key={idx} className="glass-panel admin-stats-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="admin-stats-icon" style={{ padding: '1rem', background: 'rgba(0,0,0,0.05)', borderRadius: '12px', color: stat.color }}>
               <stat.icon size={28} />
             </div>
             <div>
@@ -132,14 +132,16 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
+      <div className="admin-tabs" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
         <button 
+          className={`admin-tab-btn ${activeTab === 'inventory' ? 'active' : ''}`}
           style={{ padding: '0.75rem 1.5rem', background: 'none', color: activeTab === 'inventory' ? 'var(--accent-color)' : 'var(--text-secondary)', borderBottom: activeTab === 'inventory' ? '2px solid var(--accent-color)' : '2px solid transparent', fontWeight: 600, fontSize: '1.1rem' }}
           onClick={() => { setActiveTab('inventory'); setShowAddProduct(false); }}
         >
           Inventory Management
         </button>
         <button 
+          className={`admin-tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
           style={{ padding: '0.75rem 1.5rem', background: 'none', color: activeTab === 'orders' ? 'var(--accent-color)' : 'var(--text-secondary)', borderBottom: activeTab === 'orders' ? '2px solid var(--accent-color)' : '2px solid transparent', fontWeight: 600, fontSize: '1.1rem' }}
           onClick={() => { setActiveTab('orders'); setShowAddProduct(false); }}
         >
@@ -147,6 +149,7 @@ const AdminDashboard = () => {
         </button>
         {user?.role === 'master_admin' && (
           <button 
+            className={`admin-tab-btn ${activeTab === 'admins' ? 'active' : ''}`}
             style={{ padding: '0.75rem 1.5rem', background: 'none', color: activeTab === 'admins' ? 'var(--danger-color)' : 'var(--text-secondary)', borderBottom: activeTab === 'admins' ? '2px solid var(--danger-color)' : '2px solid transparent', fontWeight: 600, fontSize: '1.1rem' }}
             onClick={() => { setActiveTab('admins'); setShowAddProduct(false); }}
           >
@@ -194,6 +197,17 @@ const AdminDashboard = () => {
                         </span>
                       </td>
                       <td style={{ padding: '1rem', textAlign: 'right' }}>
+                        <button
+                          style={{ background: 'none', color: 'var(--primary-gold)', marginRight: '1rem' }}
+                          onClick={() => {
+                            const productUrl = `${window.location.origin}/product/${item._id}`;
+                            navigator.clipboard.writeText(productUrl);
+                            alert('Product link copied to clipboard!');
+                          }}
+                          title="Share Product Link"
+                        >
+                          <Share2 size={18} />
+                        </button>
                         <button style={{ background: 'none', color: 'var(--accent-color)', marginRight: '1rem' }}><Edit size={18} /></button>
                         <button style={{ background: 'none', color: 'var(--danger-color)' }}><Trash2 size={18} /></button>
                       </td>

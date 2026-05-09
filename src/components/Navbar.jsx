@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, User, LogOut, ChevronDown, Edit, MapPin, Package } from 'lucide-react';
+import { ShoppingCart, User, LogOut, ChevronDown, Edit, MapPin, Package, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 
 const Navbar = () => {
   const { user, logout, updateUser, isAuthenticated } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [tempName, setTempName] = useState(user?.name || '');
   const dropdownRef = useRef(null);
@@ -13,10 +14,19 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
     setDropdownOpen(false);
+    setMobileMenuOpen(false);
   };
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
+  };
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
   };
 
   const handleEditName = () => {
@@ -34,12 +44,16 @@ const Navbar = () => {
     setTempName(user?.name || '');
   };
 
-  // Close dropdown when clicking outside
+  // Close dropdown and mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
         setEditingName(false);
+      }
+      // Close mobile menu when clicking outside
+      if (mobileMenuOpen && !event.target.closest('.mobile-menu') && !event.target.closest('.hamburger-btn')) {
+        setMobileMenuOpen(false);
       }
     };
 
@@ -47,14 +61,16 @@ const Navbar = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [mobileMenuOpen]);
 
   return (
     <nav className="navbar">
-      <Link to="/" className="navbar-brand">
+      <Link to="/" className="navbar-brand" onClick={closeMobileMenu}>
         DesiThrift
       </Link>
-      <div className="navbar-links">
+
+      {/* Desktop Navigation */}
+      <div className="navbar-links desktop-nav">
         <Link to="/" className="navbar-link">Shop</Link>
         <Link to="/cart" className="navbar-link" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <ShoppingCart size={20} />
@@ -145,6 +161,67 @@ const Navbar = () => {
             <span>Login</span>
           </Link>
         )}
+      </div>
+
+      {/* Mobile Hamburger Menu */}
+      <button
+        className="hamburger-btn"
+        onClick={toggleMobileMenu}
+        style={{ display: 'none', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}
+      >
+        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Mobile Navigation Menu */}
+      <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="mobile-menu-content">
+          <Link to="/" className="mobile-menu-link" onClick={closeMobileMenu}>
+            <span>Shop</span>
+          </Link>
+          <Link to="/cart" className="mobile-menu-link" onClick={closeMobileMenu}>
+            <ShoppingCart size={20} />
+            <span>Cart</span>
+          </Link>
+          {isAuthenticated ? (
+            <>
+              {/* Profile Section */}
+              <div className="mobile-profile-section">
+                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                  <div style={{ width: '64px', height: '64px', background: 'var(--bg-secondary)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                    {user?.profileImage ? (
+                      <img src={user.profileImage} alt="Profile" style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <User size={32} style={{ color: 'var(--text-secondary)' }} />
+                    )}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{user?.name || 'No name set'}</div>
+                </div>
+              </div>
+
+              <Link to="/profile/address" className="mobile-menu-link" onClick={closeMobileMenu}>
+                <MapPin size={20} />
+                <span>Address</span>
+              </Link>
+              <Link to="/orders" className="mobile-menu-link" onClick={closeMobileMenu}>
+                <Package size={20} />
+                <span>My Orders</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="mobile-menu-link logout-btn"
+                style={{ color: 'var(--danger-color)' }}
+              >
+                <LogOut size={20} />
+                <span>Logout</span>
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="mobile-menu-link" onClick={closeMobileMenu}>
+              <User size={20} />
+              <span>Login</span>
+            </Link>
+          )}
+        </div>
       </div>
     </nav>
   );

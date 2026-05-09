@@ -119,9 +119,9 @@ const Login = () => {
   };
 
   return (
-    <div className="page-enter" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '70vh' }}>
-      <div className="glass-panel" style={{ width: '100%', maxWidth: '400px', padding: '2.5rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+    <div className="page-enter login-container">
+      <div className="glass-panel login-panel">
+        <div className="login-mode-buttons">
           <button
             onClick={() => { setLoginMode('user'); setStep('phone'); setError(''); setSuccessMessage(''); }}
             style={{ flex: 1, padding: '0.5rem', background: loginMode === 'user' ? 'var(--accent-color)' : 'transparent', color: loginMode === 'user' ? 'white' : 'var(--text-color)', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
@@ -137,13 +137,13 @@ const Login = () => {
         </div>
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ display: 'inline-flex', padding: '1rem', background: loginMode === 'admin' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)', borderRadius: '50%', color: loginMode === 'admin' ? 'var(--danger-color)' : 'var(--accent-color)', marginBottom: '1rem' }}>
+          <div className="login-icon" style={{ background: loginMode === 'admin' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(200, 155, 79, 0.1)', color: loginMode === 'admin' ? 'var(--danger-color)' : 'var(--accent-color)' }}>
             {loginMode === 'admin' ? <ShieldAlert size={32} /> : step === 'otp' ? <MessageSquare size={32} /> : <Lock size={32} />}
           </div>
-          <h2 style={{ fontSize: '2rem', fontWeight: 700 }}>
+          <h2 className="login-title">
             {loginMode === 'admin' ? 'Admin Access' : step === 'phone' ? 'Phone Login' : 'Enter OTP'}
           </h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+          <p className="login-subtitle">
             {loginMode === 'admin' && step === 'admin_email' && 'Enter your admin email to receive a magic link'}
             {loginMode === 'admin' && step === 'admin_sent' && 'Check your email for the login link'}
             {loginMode === 'user' && step === 'phone' && 'Enter your phone number to receive OTP'}
@@ -158,16 +158,15 @@ const Login = () => {
           <form onSubmit={handlePhoneSubmit}>
             <div className="input-group">
               <label className="input-label" htmlFor="login-phone-number">Phone Number</label>
-              <div style={{ display: 'flex', alignItems: 'stretch' }}>
-                <div style={{ display: 'flex', alignItems: 'center', padding: '0 1rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRight: 'none', borderRadius: '8px 0 0 8px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+              <div className="login-phone-input">
+                <div className="login-country-code">
                   +91
                 </div>
                 <input
                   id="login-phone-number"
                   name="phoneNumber"
                   type="tel"
-                  className="input-field"
-                  style={{ borderRadius: '0 8px 8px 0' }}
+                  className="input-field login-phone-field"
                   placeholder="99999 99999"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
