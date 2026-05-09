@@ -63,8 +63,15 @@ const Checkout = () => {
       }
 
       const razorpayOrderId = createOrderResponse.order.id;
+      const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      console.log('Razorpay checkout init:', {
+        key: razorpayKey,
+        keyLoaded: Boolean(razorpayKey),
+        orderId: razorpayOrderId,
+        amount: createOrderResponse.order.amount
+      });
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_mockkey',
+        key: razorpayKey,
         amount: createOrderResponse.order.amount,
         currency: createOrderResponse.order.currency,
         name: 'DesiThrift Co.',
