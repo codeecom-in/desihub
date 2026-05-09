@@ -53,20 +53,20 @@ const Checkout = () => {
         return;
       }
 
-      const { data: createOrderResponse } = await axios.post(
+      const createOrderResponse = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/create-order`,
         { amount: total }
-      );
+      ).then((response) => response.data);
 
-      if (!createOrderResponse?.success) {
+      if (!createOrderResponse || !createOrderResponse.success) {
         throw new Error(createOrderResponse?.message || 'Unable to create payment order.');
       }
 
-      const razorpayOrderId = createOrderResponse.order_id;
+      const razorpayOrderId = createOrderResponse.order.id;
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_mockkey',
-        amount: createOrderResponse.amount,
-        currency: createOrderResponse.currency,
+        amount: createOrderResponse.order.amount,
+        currency: createOrderResponse.order.currency,
         name: 'DesiThrift Co.',
         description: 'Thrift Store Purchase',
         image: '/vite.svg',

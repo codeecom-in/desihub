@@ -8,6 +8,15 @@ const path = require('path');
 
 const app = express();
 
+console.log('Razorpay env debug:', {
+  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+  hasSecret: Boolean(process.env.RAZORPAY_KEY_SECRET),
+  envKeys: Object.keys(process.env).filter((key) => key.startsWith('RAZORPAY'))
+});
+if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  console.warn('WARNING: Razorpay credentials are missing or incomplete in environment configuration.');
+}
+
 const allowedOrigins = [
   'http://localhost:5173', 
   'http://localhost:5174', 
@@ -71,11 +80,11 @@ mongoose.connect(mongoUri, {
 
 // Razorpay Instance
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || 'mock_key',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || 'mock_secret'
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
 });
 
-const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || 'mock_secret';
+const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -84,7 +93,19 @@ app.get('/', (req, res) => {
 
 // Create Razorpay order helper
 const createOrderHandler = async (req, res) => {
+  console.log('/api/create-order request headers:', req.headers);
+  console.log('/api/create-order req.user:', req.user || null);
+  console.log('/api/create-order key id:', process.env.RAZORPAY_KEY_ID);
+
   try {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      console.error('Razorpay env missing at request time:', {
+        RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+        hasSecret: Boolean(process.env.RAZORPAY_KEY_SECRET)
+      });
+      return res.status(500).json({ success: false, message: 'Razorpay credentials not configured on backend.' });
+    }
+
     const { amount } = req.body;
     if (amount == null || isNaN(amount)) {
       return res.status(400).json({ success: false, message: 'Amount is required and must be a number.' });
@@ -103,19 +124,12 @@ const createOrderHandler = async (req, res) => {
     };
 
     const order = await razorpay.orders.create(options);
-    return res.json({
-      success: true,
-      order_id: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      receipt: order.receipt
-    });
+    return res.json({ success: true, order });
   } catch (error) {
     console.error('Razorpay create order error:', error);
-    if (error.statusCode === 401) {
-      return res.status(401).json({ success: false, message: 'Razorpay authentication failed.' });
-    }
-    return res.status(500).json({ success: false, message: 'Error creating Razorpay order.' });
+    const status = error.statusCode || 500;
+    const message = error.error?.description || error.error?.message || error.message || 'Error creating Razorpay order.';
+    return res.status(status).json({ success: false, message, details: error.error || error });
   }
 };
 
