@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Package, TrendingUp, Users, DollarSign, Plus, Edit, Trash2, Shield, Share2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createAdmin } from '../services/auth';
 
 const AdminDashboard = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('inventory');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [productForm, setProductForm] = useState({
@@ -13,13 +15,37 @@ const AdminDashboard = () => {
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [inventory, setInventory] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [adminStatus, setAdminStatus] = useState({ message: '', type: '' });
   const { user } = useAuth();
 
   useEffect(() => {
     fetchInventory();
+    fetchCustomers();
+    loadOrders();
+
+    const handleStorageUpdate = (event) => {
+      if (event.key === 'desihub_orders') {
+        loadOrders();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageUpdate);
+    return () => window.removeEventListener('storage', handleStorageUpdate);
   }, []);
+
+  useEffect(() => {
+    if (location.hash) {
+      const requestedTab = location.hash.replace('#', '');
+      if (['inventory', 'orders', 'customers', 'admins'].includes(requestedTab)) {
+        setActiveTab(requestedTab);
+        setShowAddProduct(false);
+      }
+    }
+  }, [location.hash]);
 
   const fetchInventory = async () => {
     try {
@@ -30,13 +56,24 @@ const AdminDashboard = () => {
     }
   };
 
-  // Mock stats
-  const stats = [
-    { label: 'Total Revenue', value: '₹45,231', icon: DollarSign, color: 'var(--success-color)' },
-    { label: 'Total Orders', value: '152', icon: TrendingUp, color: 'var(--accent-color)' },
-    { label: 'Active Products', value: inventory.length.toString(), icon: Package, color: 'var(--primary-gold)' },
-    { label: 'Customers', value: '89', icon: Users, color: 'var(--accent-rust)' }
-  ];
+  const fetchCustomers = async () => {
+    try {
+      const res = await axios.get(import.meta.env.VITE_API_URL + '/api/users');
+      setCustomers(res.data || []);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
+  const loadOrders = () => {
+    try {
+      const storedOrders = JSON.parse(localStorage.getItem('desihub_orders') || '[]');
+      setOrders(Array.isArray(storedOrders) ? storedOrders : []);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      setOrders([]);
+    }
+  };
 
   const handleProductChange = (e) => {
     setProductForm({ ...productForm, [e.target.name]: e.target.value });
@@ -86,17 +123,64 @@ const AdminDashboard = () => {
     }
 
     try {
-      await axios.post(import.meta.env.VITE_API_URL + '/api/products', {
-        ...productForm,
-        images: uploadedImages
-      });
-      alert('Product added to inventory successfully!');
+      if (editingProduct) {
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${editingProduct._id}`, {
+          ...productForm,
+          images: uploadedImages
+        });
+        alert('Product updated successfully!');
+      } else {
+        await axios.post(import.meta.env.VITE_API_URL + '/api/products', {
+          ...productForm,
+          images: uploadedImages
+        });
+        alert('Product added to inventory successfully!');
+      }
+
       setProductForm({ name: '', price: '', description: '', category: '', stock: '', images: [] });
       setUploadedImages([]);
+      setEditingProduct(null);
       setShowAddProduct(false);
       fetchInventory();
     } catch (err) {
-      alert('Error adding product: ' + err.message);
+      alert('Error saving product: ' + err.message);
+    }
+  };
+
+  const handleEditProduct = (product) => {
+    setEditingProduct(product);
+    setProductForm({
+      name: product.name,
+      price: product.price,
+      description: product.description,
+      category: product.category,
+      stock: product.stock,
+      images: product.images || []
+    });
+    setUploadedImages(product.images || []);
+    setShowAddProduct(true);
+  };
+
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
+      fetchInventory();
+      alert('Product deleted successfully');
+    } catch (error) {
+      alert('Failed to delete product. Please try again.');
+      console.error('Delete error:', error);
+    }
+  };
+
+  const handleShareProduct = async (item) => {
+    const productUrl = `${window.location.origin}/product/${item._id}`;
+    try {
+      await navigator.clipboard.writeText(productUrl);
+      alert('Product link copied to clipboard!');
+    } catch (error) {
+      console.error('Clipboard write failed:', error);
+      alert('Unable to copy link. Please copy manually: ' + productUrl);
     }
   };
 
@@ -105,6 +189,15 @@ const AdminDashboard = () => {
     if (status === 'Low Stock') return 'var(--warning)';
     return 'var(--danger-color)';
   };
+
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const stats = [
+    { label: 'Total Revenue', value: `₹${totalRevenue.toFixed(0)}`, icon: DollarSign, color: 'var(--success-color)' },
+    { label: 'Total Orders', value: totalOrders.toString(), icon: TrendingUp, color: 'var(--accent-color)' },
+    { label: 'Active Products', value: inventory.length.toString(), icon: Package, color: 'var(--primary-gold)' },
+    { label: 'Customers', value: customers.length.toString(), icon: Users, color: 'var(--accent-rust)' }
+  ];
 
   return (
     <div className="page-enter">
@@ -145,7 +238,14 @@ const AdminDashboard = () => {
           style={{ padding: '0.75rem 1.5rem', background: 'none', color: activeTab === 'orders' ? 'var(--accent-color)' : 'var(--text-secondary)', borderBottom: activeTab === 'orders' ? '2px solid var(--accent-color)' : '2px solid transparent', fontWeight: 600, fontSize: '1.1rem' }}
           onClick={() => { setActiveTab('orders'); setShowAddProduct(false); }}
         >
-          Order Fulfillment
+          Order Management
+        </button>
+        <button 
+          className={`admin-tab-btn ${activeTab === 'customers' ? 'active' : ''}`}
+          style={{ padding: '0.75rem 1.5rem', background: 'none', color: activeTab === 'customers' ? 'var(--accent-color)' : 'var(--text-secondary)', borderBottom: activeTab === 'customers' ? '2px solid var(--accent-color)' : '2px solid transparent', fontWeight: 600, fontSize: '1.1rem' }}
+          onClick={() => { setActiveTab('customers'); setShowAddProduct(false); }}
+        >
+          Customers
         </button>
         {user?.role === 'master_admin' && (
           <button 
@@ -199,17 +299,25 @@ const AdminDashboard = () => {
                       <td style={{ padding: '1rem', textAlign: 'right' }}>
                         <button
                           style={{ background: 'none', color: 'var(--primary-gold)', marginRight: '1rem' }}
-                          onClick={() => {
-                            const productUrl = `${window.location.origin}/product/${item._id}`;
-                            navigator.clipboard.writeText(productUrl);
-                            alert('Product link copied to clipboard!');
-                          }}
+                          onClick={() => handleShareProduct(item)}
                           title="Share Product Link"
                         >
                           <Share2 size={18} />
                         </button>
-                        <button style={{ background: 'none', color: 'var(--accent-color)', marginRight: '1rem' }}><Edit size={18} /></button>
-                        <button style={{ background: 'none', color: 'var(--danger-color)' }}><Trash2 size={18} /></button>
+                        <button
+                          style={{ background: 'none', color: 'var(--accent-color)', marginRight: '1rem' }}
+                          onClick={() => handleEditProduct(item)}
+                          title="Edit Product"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          style={{ background: 'none', color: 'var(--danger-color)' }}
+                          onClick={() => handleDeleteProduct(item._id)}
+                          title="Delete Product"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </td>
                     </tr>
                     );
@@ -309,37 +417,76 @@ const AdminDashboard = () => {
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
           <div>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Order Fulfillment</h2>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
-                    <th style={{ padding: '1rem' }}>Order ID</th>
-                    <th style={{ padding: '1rem' }}>Date</th>
-                    <th style={{ padding: '1rem' }}>Customer</th>
-                    <th style={{ padding: '1rem' }}>Amount</th>
-                    <th style={{ padding: '1rem' }}>Status</th>
-                    <th style={{ padding: '1rem', textAlign: 'right' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '1rem', fontWeight: 500 }}>#ORD-1234</td>
-                    <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>Today, 10:45 AM</td>
-                    <td style={{ padding: '1rem' }}>John Doe</td>
-                    <td style={{ padding: '1rem' }}>₹1299</td>
-                    <td style={{ padding: '1rem' }}>
-                      <span style={{ padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.85rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success-color)' }}>
-                        Paid - Unfulfilled
-                      </span>
-                    </td>
-                    <td style={{ padding: '1rem', textAlign: 'right' }}>
-                      <button className="btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>Fulfill</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Order Management</h2>
+            {orders.length === 0 ? (
+              <div style={{ color: 'var(--text-secondary)' }}>No orders have been placed yet.</div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                      <th style={{ padding: '1rem' }}>Order ID</th>
+                      <th style={{ padding: '1rem' }}>Date</th>
+                      <th style={{ padding: '1rem' }}>Customer</th>
+                      <th style={{ padding: '1rem' }}>Amount</th>
+                      <th style={{ padding: '1rem' }}>Status</th>
+                      <th style={{ padding: '1rem', textAlign: 'right' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((order) => (
+                      <tr key={order.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '1rem', fontWeight: 500 }}>{order.id}</td>
+                        <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{new Date(order.createdAt).toLocaleString()}</td>
+                        <td style={{ padding: '1rem' }}>{order.customer?.name || 'Guest'}</td>
+                        <td style={{ padding: '1rem' }}>₹{order.total}</td>
+                        <td style={{ padding: '1rem' }}>
+                          <span style={{ padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.85rem', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success-color)' }}>
+                            {order.status || 'Paid'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem', textAlign: 'right' }}>
+                          <button className="btn-primary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }} onClick={() => window.alert('Order fulfillment is managed externally.')}>Fulfill</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* CUSTOMERS TAB */}
+        {activeTab === 'customers' && (
+          <div>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Customer Directory</h2>
+            {customers.length === 0 ? (
+              <div style={{ color: 'var(--text-secondary)' }}>No customer accounts found yet.</div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                      <th style={{ padding: '1rem' }}>Customer</th>
+                      <th style={{ padding: '1rem' }}>Phone</th>
+                      <th style={{ padding: '1rem' }}>Email</th>
+                      <th style={{ padding: '1rem' }}>Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customers.map((customer) => (
+                      <tr key={customer._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '1rem', fontWeight: 500 }}>{customer.email || 'N/A'}</td>
+                        <td style={{ padding: '1rem' }}>{customer.phone || '-'}</td>
+                        <td style={{ padding: '1rem' }}>{customer.email || '-'}</td>
+                        <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{new Date(customer.createdAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

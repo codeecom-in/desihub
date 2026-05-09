@@ -31,6 +31,16 @@ const Checkout = () => {
     });
   };
 
+  const saveOrderToLocalStorage = (order) => {
+    try {
+      const existing = JSON.parse(localStorage.getItem('desihub_orders') || '[]');
+      const updated = [order, ...(Array.isArray(existing) ? existing : [])];
+      localStorage.setItem('desihub_orders', JSON.stringify(updated));
+    } catch (error) {
+      console.error('Error saving order:', error);
+    }
+  };
+
   const handlePayment = async (e) => {
     e.preventDefault();
     const res = await loadRazorpayScript();
@@ -55,11 +65,24 @@ const Checkout = () => {
       image: '/vite.svg',
       order_id: mockOrder.id,
       handler: async function (response) {
-        // Here we'd verify the payment on backend
-        // await axios.post('/api/orders/verify', response);
+        const newOrder = {
+          id: response.razorpay_order_id || mockOrder.id,
+          paymentId: response.razorpay_payment_id,
+          total,
+          status: 'Paid',
+          customer: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone
+          },
+          createdAt: new Date().toISOString(),
+          items: cart.map((item) => ({ id: item._id, name: item.name, quantity: item.quantity, price: item.price }))
+        };
+
+        saveOrderToLocalStorage(newOrder);
         alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
         clearCart();
-        navigate('/');
+        navigate('/admin#orders');
       },
       prefill: {
         name: formData.name,

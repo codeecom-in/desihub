@@ -97,6 +97,7 @@ app.post('/api/orders/create', async (req, res) => {
 
 // Additional routes
 app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 

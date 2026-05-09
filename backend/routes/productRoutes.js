@@ -61,6 +61,23 @@ router.post('/', async (req, res) => {
   }
 });
 
+// UPDATE a product
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, price, description, category, stock, images } = req.body;
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      { name, price, description, category, stock, images },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) return res.status(404).json({ message: 'Product not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // DELETE a product
 router.delete('/:id', async (req, res) => {
   try {

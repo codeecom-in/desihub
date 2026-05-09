@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Package, Users, Settings, LogOut } from 'lucide-react';
+import { Package, Users, ShoppingCart, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const AdminNavbar = () => {
@@ -17,17 +17,17 @@ const AdminNavbar = () => {
         DesiThrift Admin
       </Link>
       <div className="navbar-links">
-        <Link to="/admin" className="navbar-link flex items-center gap-2">
+        <Link to="/admin#inventory" className="navbar-link flex items-center gap-2">
           <Package size={20} />
           <span>Inventory</span>
         </Link>
-        <Link to="/admin" className="navbar-link flex items-center gap-2">
+        <Link to="/admin#orders" className="navbar-link flex items-center gap-2">
+          <ShoppingCart size={20} />
+          <span>Orders</span>
+        </Link>
+        <Link to="/admin#customers" className="navbar-link flex items-center gap-2">
           <Users size={20} />
           <span>Customers</span>
-        </Link>
-        <Link to="/admin" className="navbar-link flex items-center gap-2">
-          <Settings size={20} />
-          <span>Settings</span>
         </Link>
         <button
           onClick={handleLogout}
