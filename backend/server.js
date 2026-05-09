@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const Razorpay = require('razorpay');
+const crypto = require('crypto');
 const path = require('path');
 
 const app = express();
@@ -70,29 +71,74 @@ mongoose.connect(mongoUri, {
 
 // Razorpay Instance
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY || 'mock_key',
-  key_secret: process.env.RAZORPAY_SECRET || 'mock_secret'
+  key_id: process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY || 'mock_key',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || 'mock_secret'
 });
+
+const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET || 'mock_secret';
 
 // Basic Route
 app.get('/', (req, res) => {
   res.send('Thrift Store API Running');
 });
 
-// Mock Order Creation Route
-app.post('/api/orders/create', async (req, res) => {
+// Create Razorpay order helper
+const createOrderHandler = async (req, res) => {
   try {
     const { amount } = req.body;
+    if (amount == null || isNaN(amount)) {
+      return res.status(400).json({ success: false, message: 'Amount is required and must be a number.' });
+    }
+
+    const amountPaise = Math.round(Number(amount) * 100);
+    if (amountPaise < 100) {
+      return res.status(400).json({ success: false, message: 'Minimum amount is ₹1 (100 paise).' });
+    }
+
     const options = {
-      amount: amount * 100, // amount in smallest currency unit
-      currency: "INR",
-      receipt: "receipt_order_" + Date.now()
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: `receipt_order_${Date.now()}`,
+      payment_capture: 1
     };
+
     const order = await razorpay.orders.create(options);
-    res.json(order);
+    return res.json({
+      success: true,
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      receipt: order.receipt
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating order', error });
+    console.error('Razorpay create order error:', error);
+    if (error.statusCode === 401) {
+      return res.status(401).json({ success: false, message: 'Razorpay authentication failed.' });
+    }
+    return res.status(500).json({ success: false, message: 'Error creating Razorpay order.' });
   }
+};
+
+app.post('/api/orders/create', createOrderHandler);
+app.post('/api/create-order', createOrderHandler);
+
+app.post('/api/verify-payment', (req, res) => {
+  const { order_id, payment_id, razorpay_signature } = req.body;
+
+  if (!order_id || !payment_id || !razorpay_signature) {
+    return res.status(400).json({ success: false, message: 'Missing required payment fields.' });
+  }
+
+  const generatedSignature = crypto
+    .createHmac('sha256', razorpayKeySecret)
+    .update(`${order_id}|${payment_id}`)
+    .digest('hex');
+
+  if (generatedSignature !== razorpay_signature) {
+    return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
+  }
+
+  return res.json({ success: true, message: 'Payment signature verified successfully.' });
 });
 
 // Additional routes

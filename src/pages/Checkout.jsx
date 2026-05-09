@@ -16,6 +16,7 @@ const Checkout = () => {
     city: '',
     pincode: ''
   });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -43,65 +44,101 @@ const Checkout = () => {
 
   const handlePayment = async (e) => {
     e.preventDefault();
-    const res = await loadRazorpayScript();
-    
-    if (!res) {
-      alert('Razorpay SDK failed to load. Are you online?');
-      return;
-    }
+    setSubmitting(true);
 
-    // In a real app, call backend to create order
-    // const { data: order } = await axios.post(import.meta.env.VITE_API_URL + '/api/orders/create', { amount: total });
-    
-    // Mock order creation
-    const mockOrder = { id: 'order_mock123' + Date.now(), amount: total * 100 };
-
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY || 'rzp_test_mockkey', // Enter the Key ID generated from the Dashboard
-      amount: mockOrder.amount,
-      currency: 'INR',
-      name: 'DesiThrift Co.',
-      description: 'Thrift Store Purchase',
-      image: '/vite.svg',
-      order_id: mockOrder.id,
-      handler: async function (response) {
-        const newOrder = {
-          id: response.razorpay_order_id || mockOrder.id,
-          paymentId: response.razorpay_payment_id,
-          total,
-          status: 'Paid',
-          customer: {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone
-          },
-          createdAt: new Date().toISOString(),
-          items: cart.map((item) => ({ id: item._id, name: item.name, quantity: item.quantity, price: item.price }))
-        };
-
-        saveOrderToLocalStorage(newOrder);
-        alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
-        clearCart();
-        navigate('/admin#orders');
-      },
-      prefill: {
-        name: formData.name,
-        email: formData.email,
-        contact: formData.phone,
-      },
-      notes: {
-        address: formData.address,
-      },
-      theme: {
-        color: '#C89B4F',
-      },
-      method: {
-        upi: true // Ensure UPI is highlighted
+    try {
+      const res = await loadRazorpayScript();
+      if (!res) {
+        alert('Razorpay SDK failed to load. Are you online?');
+        return;
       }
-    };
 
-    const paymentObject = new window.Razorpay(options);
-    paymentObject.open();
+      const { data: createOrderResponse } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/create-order`,
+        { amount: total }
+      );
+
+      if (!createOrderResponse?.success) {
+        throw new Error(createOrderResponse?.message || 'Unable to create payment order.');
+      }
+
+      const razorpayOrderId = createOrderResponse.order_id;
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_mockkey',
+        amount: createOrderResponse.amount,
+        currency: createOrderResponse.currency,
+        name: 'DesiThrift Co.',
+        description: 'Thrift Store Purchase',
+        image: '/vite.svg',
+        order_id: razorpayOrderId,
+        handler: async function (response) {
+          try {
+            const { data: verifyResponse } = await axios.post(
+              `${import.meta.env.VITE_API_URL}/api/verify-payment`,
+              {
+                order_id: response.razorpay_order_id,
+                payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              }
+            );
+
+            if (!verifyResponse?.success) {
+              throw new Error(verifyResponse?.message || 'Payment verification failed.');
+            }
+
+            const newOrder = {
+              id: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              total,
+              status: 'Paid',
+              customer: {
+                name: formData.name,
+                email: formData.email,
+                phone: formData.phone
+              },
+              createdAt: new Date().toISOString(),
+              items: cart.map((item) => ({ id: item._id, name: item.name, quantity: item.quantity, price: item.price }))
+            };
+
+            saveOrderToLocalStorage(newOrder);
+            alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
+            clearCart();
+            navigate('/admin#orders');
+          } catch (verifyError) {
+            console.error('Payment verification error:', verifyError);
+            alert('Payment was completed but verification failed. Please contact support.');
+          }
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        notes: {
+          address: formData.address,
+        },
+        theme: {
+          color: '#C89B4F',
+        },
+        modal: {
+          ondismiss: function () {
+            setSubmitting(false);
+          }
+        }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.on('payment.failed', function (response) {
+        console.error('Payment failed:', response.error);
+        alert('Payment failed, please try again.');
+        setSubmitting(false);
+      });
+      paymentObject.open();
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert(error?.response?.data?.message || error.message || 'Unable to initialize payment.');
+      setSubmitting(false);
+    }
   };
 
   if (cart.length === 0) {
@@ -146,8 +183,8 @@ const Checkout = () => {
               <span>Total Amount to Pay:</span>
               <span style={{ color: 'var(--accent-color)' }}>₹{total}</span>
             </div>
-            <button type="submit" className="btn-primary" style={{ width: '100%', fontSize: '1.1rem', padding: '1rem' }}>
-              Pay via Razorpay (UPI)
+            <button type="submit" className="btn-primary" style={{ width: '100%', fontSize: '1.1rem', padding: '1rem' }} disabled={submitting}>
+              {submitting ? 'Processing payment...' : 'Pay via Razorpay (UPI)'}
             </button>
           </div>
         </form>
