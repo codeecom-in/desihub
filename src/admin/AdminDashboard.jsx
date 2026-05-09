@@ -34,8 +34,8 @@ const AdminDashboard = () => {
   const stats = [
     { label: 'Total Revenue', value: '₹45,231', icon: DollarSign, color: 'var(--success-color)' },
     { label: 'Total Orders', value: '152', icon: TrendingUp, color: 'var(--accent-color)' },
-    { label: 'Active Products', value: inventory.length.toString(), icon: Package, color: '#f59e0b' },
-    { label: 'Customers', value: '89', icon: Users, color: '#8b5cf6' }
+    { label: 'Active Products', value: inventory.length.toString(), icon: Package, color: 'var(--primary-gold)' },
+    { label: 'Customers', value: '89', icon: Users, color: 'var(--accent-rust)' }
   ];
 
   const handleProductChange = (e) => {
@@ -102,7 +102,7 @@ const AdminDashboard = () => {
 
   const getStockColor = (status) => {
     if (status === 'In Stock') return 'var(--success-color)';
-    if (status === 'Low Stock') return '#f59e0b';
+    if (status === 'Low Stock') return 'var(--warning)';
     return 'var(--danger-color)';
   };
 

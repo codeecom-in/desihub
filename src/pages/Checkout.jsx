@@ -70,7 +70,7 @@ const Checkout = () => {
         address: formData.address,
       },
       theme: {
-        color: '#3b82f6',
+        color: '#C89B4F',
       },
       method: {
         upi: true // Ensure UPI is highlighted

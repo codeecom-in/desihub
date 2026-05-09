@@ -4,28 +4,43 @@
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Epilogue", ui-sans-serif, system-ui, sans-serif;
 
-  /* DesiThrift Brand Colors */
-  --color-primary: #b80049;
-  --color-primary-container: #e2165f;
-  --color-soft-pink: #FCE4EC;
-  --color-slate-grey: #546067;
-  --color-surface: #fbf9f9;
-  --color-surface-container: #efeded;
+  /* Dark Vintage Theme */
+  --bg-main: #1F140F;
+  --bg-card: #2B1D14;
+  --bg-soft: #3A281D;
+
+  --primary-gold: #C89B4F;
+  --primary-gold-hover: #D8AE68;
+  --dark-gold: #9F7437;
+
+  --text-main: #F2E6D8;
+  --text-muted: #B7A38D;
+  --text-dark: #6E5843;
+
+  --accent-rust: #A45A3F;
+  --accent-olive: #6E6A4B;
+
+  --border-soft: #4B3526;
+  --shadow: rgba(0, 0, 0, 0.35);
+
+  --success: #7A8C5A;
+  --warning: #C27D3B;
+  --danger: #9E4A3A;
 
   /* Mapped Variables for components */
-  --bg-primary: var(--color-surface);
-  --bg-secondary: var(--color-surface-container);
-  --bg-card: rgba(255, 255, 255, 0.85);
-  --text-primary: #111827;
-  --text-secondary: var(--color-slate-grey);
-  --accent-color: var(--color-primary);
-  --accent-hover: var(--color-primary-container);
-  --accent-gradient: linear-gradient(135deg, var(--color-primary) 0%, #ff4d8b 100%);
-  --success-color: #10b981;
-  --danger-color: #ef4444;
-  --border-color: rgba(0, 0, 0, 0.1);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.5);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+  --bg-primary: var(--bg-main);
+  --bg-secondary: var(--bg-soft);
+  --bg-card: var(--bg-card);
+  --text-primary: var(--text-main);
+  --text-secondary: var(--text-muted);
+  --accent-color: var(--primary-gold);
+  --accent-hover: var(--primary-gold-hover);
+  --accent-gradient: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-hover) 100%);
+  --success-color: var(--success);
+  --danger-color: var(--danger);
+  --border-color: var(--border-soft);
+  --glass-border: 1px solid var(--border-soft);
+  --glass-shadow: 0 8px 32px 0 var(--shadow);
 }
 
 * {
@@ -42,8 +57,8 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   background-image: 
-    radial-gradient(at 0% 0%, var(--color-soft-pink) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(226, 22, 95, 0.05) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, var(--bg-soft) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(200, 155, 79, 0.1) 0px, transparent 50%);
   background-attachment: fixed;
 }
 
@@ -98,7 +113,7 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(251, 249, 249, 0.85); /* color-surface transparent */
+  background: rgba(31, 20, 15, 0.95); /* bg-main with transparency */
   backdrop-filter: blur(16px);
   border-bottom: var(--glass-border);
 }
@@ -161,7 +176,7 @@ button {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(200, 155, 79, 0.4);
 }
 
 /* Forms */
@@ -179,7 +194,7 @@ button {
 .input-field {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   color: var(--text-primary);
@@ -190,7 +205,7 @@ button {
 .input-field:focus {
   outline: none;
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 2px rgba(200, 155, 79, 0.3);
 }
 
 /* Product Cards */
@@ -210,7 +225,7 @@ button {
 
 .product-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 24px var(--shadow);
 }
 
 .product-image {
