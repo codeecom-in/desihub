@@ -247,4 +247,31 @@ router.post('/create-admin', async (req, res) => {
   }
 });
 
+// Sync Firebase User
+router.post('/sync-user', async (req, res) => {
+  const { phone, uid } = req.body;
+  if (!phone) {
+    return res.status(400).json({ success: false, message: 'Phone number is required.' });
+  }
+
+  try {
+    let user = await User.findOne({ phone });
+    
+    if (!user) {
+      // First time user!
+      user = new User({ phone });
+      await user.save();
+      return res.json({ success: true, isNewUser: true, user });
+    }
+
+    // Existing user
+    // We check if name is empty to determine if they need to setup profile
+    const needsSetup = !user.name;
+    res.json({ success: true, isNewUser: needsSetup, user });
+  } catch (error) {
+    console.error('Error syncing user:', error);
+    res.status(500).json({ success: false, message: 'Failed to sync user.' });
+  }
+});
+
 module.exports = router;

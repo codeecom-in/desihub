@@ -25,8 +25,25 @@ export const sendOTP = async (phoneNumber) => {
 export const verifyOTP = async (confirmationResult, otp) => {
   try {
     const result = await confirmationResult.confirm(otp);
-    const user = result.user;
-    return { success: true, user: { phone: user.phoneNumber, uid: user.uid } };
+    const firebaseUser = result.user;
+    
+    // Sync with MongoDB backend
+    const response = await fetch(`${API_URL}/api/auth/sync-user`, {
+      method: 'POST',
+      headers: buildHeaders(),
+      body: JSON.stringify({ phone: firebaseUser.phoneNumber, uid: firebaseUser.uid })
+    });
+    
+    const dbResult = await response.json();
+    if (!dbResult.success) {
+      throw new Error(dbResult.message || 'Failed to sync user data');
+    }
+
+    return { 
+      success: true, 
+      user: dbResult.user, 
+      isNewUser: dbResult.isNewUser 
+    };
   } catch (error) {
     console.error('Error verifying OTP:', error);
     return { success: false, message: error.message };

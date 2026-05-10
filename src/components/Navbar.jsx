@@ -167,7 +167,6 @@ const Navbar = () => {
       <button
         className="hamburger-btn"
         onClick={toggleMobileMenu}
-        style={{ display: 'none', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}
       >
         {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>

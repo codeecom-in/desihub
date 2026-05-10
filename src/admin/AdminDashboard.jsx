@@ -473,15 +473,30 @@ const AdminDashboard = () => {
                       <th style={{ padding: '1rem' }}>Customer</th>
                       <th style={{ padding: '1rem' }}>Phone</th>
                       <th style={{ padding: '1rem' }}>Email</th>
+                      <th style={{ padding: '1rem' }}>Location</th>
                       <th style={{ padding: '1rem' }}>Joined</th>
                     </tr>
                   </thead>
                   <tbody>
                     {customers.map((customer) => (
                       <tr key={customer._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                        <td style={{ padding: '1rem', fontWeight: 500 }}>{customer.email || 'N/A'}</td>
+                        <td style={{ padding: '1rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          {customer.profilePicture ? (
+                            <img src={customer.profilePicture} alt="Profile" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Users size={16} style={{ color: 'var(--text-secondary)' }} />
+                            </div>
+                          )}
+                          <span>{customer.name || 'Unnamed Customer'}</span>
+                        </td>
                         <td style={{ padding: '1rem' }}>{customer.phone || '-'}</td>
                         <td style={{ padding: '1rem' }}>{customer.email || '-'}</td>
+                        <td style={{ padding: '1rem' }}>
+                          {customer.addresses && customer.addresses.length > 0 
+                            ? `${customer.addresses[0].city}, ${customer.addresses[0].state}`
+                            : '-'}
+                        </td>
                         <td style={{ padding: '1rem', color: 'var(--text-secondary)' }}>{new Date(customer.createdAt).toLocaleDateString()}</td>
                       </tr>
                     ))}
