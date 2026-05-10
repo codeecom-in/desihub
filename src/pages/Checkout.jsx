@@ -53,9 +53,13 @@ const Checkout = () => {
         return;
       }
 
+      const token = localStorage.getItem('token');
+      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
       const createOrderResponse = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/create-order`,
-        { amount: total }
+        { amount: total },
+        { headers: authHeaders }
       ).then((response) => response.data);
 
       if (!createOrderResponse || !createOrderResponse.success) {
@@ -86,7 +90,8 @@ const Checkout = () => {
                 order_id: response.razorpay_order_id,
                 payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature
-              }
+              },
+              { headers: authHeaders }
             );
 
             if (!verifyResponse?.success) {

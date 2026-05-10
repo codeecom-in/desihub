@@ -146,6 +146,7 @@ const createOrderHandler = async (req, res) => {
   }
 };
 
+// Public payment routes: create-order and verify-payment are intentionally not protected by auth middleware
 app.post('/api/orders/create', createOrderHandler);
 app.post('/api/create-order', createOrderHandler);
 
