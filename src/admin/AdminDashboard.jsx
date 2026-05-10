@@ -96,7 +96,9 @@ const AdminDashboard = () => {
           formData,
           { headers: { 'Content-Type': 'multipart/form-data' } }
         );
-        newImages.push(import.meta.env.VITE_API_URL + response.data);
+        const uploadedUrl = response.data;
+        const finalUrl = uploadedUrl.startsWith('http') ? uploadedUrl : import.meta.env.VITE_API_URL + uploadedUrl;
+        newImages.push(finalUrl);
       } catch (err) {
         console.error('Image upload error:', err);
         alert('Failed to upload image: ' + file.name);

@@ -2,10 +2,18 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 
 const router = express.Router();
 
-// Ensure uploads directory exists
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Ensure uploads directory exists temporarily
 const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
@@ -24,7 +32,7 @@ const storage = multer.diskStorage({
 });
 
 function checkFileType(file, cb) {
-  const filetypes = /jpg|jpeg|png/;
+  const filetypes = /jpg|jpeg|png|webp|avif/;
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = filetypes.test(file.mimetype);
 
@@ -42,8 +50,26 @@ const upload = multer({
   },
 });
 
-router.post('/', upload.single('file'), (req, res) => {
-  res.send(`/${req.file.path.replace(/\\/g, '/')}`);
+router.post('/', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).send('No file uploaded.');
+    }
+    
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'thrift-store',
+    });
+
+    // Delete the temporary file
+    fs.unlinkSync(req.file.path);
+
+    // Return the secure Cloudinary URL
+    res.send(result.secure_url);
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    res.status(500).send('Error uploading image');
+  }
 });
 
 module.exports = router;
