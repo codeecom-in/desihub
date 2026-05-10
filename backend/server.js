@@ -2,9 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
 const path = require('path');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 
@@ -52,6 +51,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use('/api', paymentRoutes);
 
 // Database Connection
 const mongoUri = process.env.MONGO_URI;
@@ -78,12 +78,6 @@ mongoose.connect(mongoUri, {
 }).catch(err => {
   console.error('MongoDB connection error:', err);
   process.exit(1);
-});
-
-// Razorpay Instance
-const razorpay = new Razorpay({
-  key_id: razorpayKeyId,
-  key_secret: razorpayKeySecret
 });
 
 // Basic Route
@@ -147,28 +141,6 @@ const createOrderHandler = async (req, res) => {
 };
 
 // Public payment routes: create-order and verify-payment are intentionally not protected by auth middleware
-app.post('/api/orders/create', createOrderHandler);
-app.post('/api/create-order', createOrderHandler);
-
-app.post('/api/verify-payment', (req, res) => {
-  const { order_id, payment_id, razorpay_signature } = req.body;
-
-  if (!order_id || !payment_id || !razorpay_signature) {
-    return res.status(400).json({ success: false, message: 'Missing required payment fields.' });
-  }
-
-  const generatedSignature = crypto
-    .createHmac('sha256', razorpayKeySecret)
-    .update(`${order_id}|${payment_id}`)
-    .digest('hex');
-
-  if (generatedSignature !== razorpay_signature) {
-    return res.status(400).json({ success: false, message: 'Invalid payment signature.' });
-  }
-
-  return res.json({ success: true, message: 'Payment signature verified successfully.' });
-});
-
 // Additional routes
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
