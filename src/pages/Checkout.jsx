@@ -1,26 +1,20 @@
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { MapPin, CheckCircle2 } from 'lucide-react';
 
 const Checkout = () => {
   const { cart, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    pincode: ''
-  });
+  const [selectedAddressId, setSelectedAddressId] = useState(
+    user?.addresses?.find((a) => a.isPrimary)?._id || user?.addresses?.[0]?._id
+  );
   const [submitting, setSubmitting] = useState(false);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -44,6 +38,12 @@ const Checkout = () => {
 
   const handlePayment = async (e) => {
     e.preventDefault();
+
+    if (!selectedAddressId) {
+      alert('Please select a delivery address to proceed.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -68,12 +68,10 @@ const Checkout = () => {
 
       const razorpayOrderId = createOrderResponse.order.id;
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-      console.log('Razorpay checkout init:', {
-        key: razorpayKey,
-        keyLoaded: Boolean(razorpayKey),
-        orderId: razorpayOrderId,
-        amount: createOrderResponse.order.amount
-      });
+      const selectedAddress = user?.addresses?.find((a) => a._id === selectedAddressId);
+      
+      const fullAddressString = `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.pincode}`;
+
       const options = {
         key: razorpayKey,
         amount: createOrderResponse.order.amount,
@@ -104,9 +102,10 @@ const Checkout = () => {
               total,
               status: 'Paid',
               customer: {
-                name: formData.name,
-                email: formData.email,
-                phone: formData.phone
+                name: user?.name || 'Customer',
+                email: user?.email || '',
+                phone: user?.phone || '',
+                address: fullAddressString
               },
               createdAt: new Date().toISOString(),
               items: cart.map((item) => ({ id: item._id, name: item.name, quantity: item.quantity, price: item.price }))
@@ -115,19 +114,19 @@ const Checkout = () => {
             saveOrderToLocalStorage(newOrder);
             alert(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`);
             clearCart();
-            navigate('/admin#orders');
+            navigate('/orders');
           } catch (verifyError) {
             console.error('Payment verification error:', verifyError);
             alert('Payment was completed but verification failed. Please contact support.');
           }
         },
         prefill: {
-          name: formData.name,
-          email: formData.email,
-          contact: formData.phone,
+          name: user?.name || '',
+          email: user?.email || '',
+          contact: user?.phone || '',
         },
         notes: {
-          address: formData.address,
+          address: fullAddressString,
         },
         theme: {
           color: '#C89B4F',
@@ -161,45 +160,106 @@ const Checkout = () => {
     <div className="page-enter checkout-container">
       <h1 style={{ fontSize: 'clamp(1.75rem, 5vw, 2rem)', fontWeight: 700, marginBottom: '2rem', textAlign: 'center' }}>Checkout</h1>
       
-      <div className="glass-panel" style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}>
-        <form onSubmit={handlePayment}>
-          <div className="input-group">
-            <label className="input-label" htmlFor="checkout-name">Full Name</label>
-            <input id="checkout-name" type="text" name="name" className="input-field" required onChange={handleChange} />
+      <div className="cart-grid">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Delivery Details</h2>
+          
+          <div className="glass-panel" style={{ padding: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>Contact Information</h3>
+            <p style={{ fontWeight: 500, marginBottom: '0.25rem' }}>{user?.name || 'No Name Set'}</p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{user?.phone}</p>
+            <p style={{ color: 'var(--text-secondary)' }}>{user?.email || 'No Email Set'}</p>
           </div>
-          <div className="input-group">
-            <label className="input-label" htmlFor="checkout-email">Email Address</label>
-            <input id="checkout-email" type="email" name="email" className="input-field" required onChange={handleChange} />
-          </div>
-          <div className="input-group">
-            <label className="input-label" htmlFor="checkout-phone">Phone Number</label>
-            <input id="checkout-phone" type="tel" name="phone" className="input-field" required onChange={handleChange} />
-          </div>
-          <div className="input-group">
-            <label className="input-label" htmlFor="checkout-address">Delivery Address</label>
-            <textarea id="checkout-address" name="address" className="input-field" rows="3" required onChange={handleChange}></textarea>
-          </div>
-          <div className="checkout-form-grid">
-            <div className="input-group">
-              <label className="input-label" htmlFor="checkout-city">City</label>
-              <input id="checkout-city" type="text" name="city" className="input-field" required onChange={handleChange} />
+
+          <div className="glass-panel" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>Select Delivery Address</h3>
+              <Link to="/profile/address" style={{ color: 'var(--accent-color)', fontSize: '0.875rem', textDecoration: 'underline' }}>
+                Add/Edit Address
+              </Link>
             </div>
-            <div className="input-group">
-              <label className="input-label" htmlFor="checkout-pincode">PIN Code</label>
-              <input id="checkout-pincode" type="text" name="pincode" className="input-field" required onChange={handleChange} />
-            </div>
+            
+            {user?.addresses && user.addresses.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {user.addresses.map((address) => (
+                  <label 
+                    key={address._id} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'flex-start', 
+                      gap: '1rem', 
+                      padding: '1rem', 
+                      border: selectedAddressId === address._id ? '2px solid var(--accent-color)' : '1px solid var(--border-color)', 
+                      borderRadius: '8px', 
+                      cursor: 'pointer',
+                      background: selectedAddressId === address._id ? 'rgba(200, 155, 79, 0.05)' : 'transparent',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ marginTop: '0.25rem' }}>
+                      <input 
+                        type="radio" 
+                        name="delivery_address" 
+                        value={address._id} 
+                        checked={selectedAddressId === address._id} 
+                        onChange={() => setSelectedAddressId(address._id)} 
+                        style={{ display: 'none' }} 
+                      />
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: selectedAddressId === address._id ? '6px solid var(--accent-color)' : '2px solid var(--border-color)' }}></div>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 600 }}>{address.city}, {address.state}</span>
+                        {address.isPrimary && <span style={{ fontSize: '0.75rem', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '12px' }}>Primary</span>}
+                      </div>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                        {address.street}<br/>
+                        {address.pincode}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                <MapPin size={32} style={{ color: 'var(--text-secondary)', margin: '0 auto 1rem' }} />
+                <p style={{ marginBottom: '1rem' }}>You don't have any delivery addresses saved.</p>
+                <Link to="/profile/address" className="btn-primary" style={{ display: 'inline-block' }}>
+                  Set Up Address
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="glass-panel" style={{ padding: '2rem', height: 'fit-content', position: 'sticky', top: '100px' }}>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '1.5rem' }}>Order Summary</h3>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+            <span>Subtotal ({cart.length} items)</span>
+            <span>₹{total}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>
+            <span>Shipping</span>
+            <span>Free</span>
           </div>
           
-          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: 'var(--glass-border)' }}>
-            <div className="checkout-total" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', fontWeight: 600, marginBottom: '1.5rem' }}>
-              <span>Total Amount to Pay:</span>
-              <span style={{ color: 'var(--accent-color)' }}>₹{total}</span>
-            </div>
-            <button type="submit" className="btn-primary" style={{ width: '100%', fontSize: '1.1rem', padding: '1rem' }} disabled={submitting}>
-              {submitting ? 'Processing payment...' : 'Pay via Razorpay (UPI)'}
-            </button>
+          <div style={{ borderTop: 'var(--glass-border)', margin: '1.5rem 0' }}></div>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', fontSize: '1.25rem', fontWeight: 700 }}>
+            <span>Total to Pay</span>
+            <span style={{ color: 'var(--accent-color)' }}>₹{total}</span>
           </div>
-        </form>
+
+          <button 
+            onClick={handlePayment}
+            className="btn-primary" 
+            style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', padding: '1rem' }}
+            disabled={submitting || !user?.addresses?.length}
+          >
+            {submitting ? 'Processing payment...' : 'Pay via Razorpay'}
+          </button>
+        </div>
       </div>
     </div>
   );
