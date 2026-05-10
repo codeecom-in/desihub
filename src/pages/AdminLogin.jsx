@@ -15,7 +15,7 @@ const AdminLogin = () => {
   const navigate = useNavigate();
 
   // Allowed admin phone numbers
-  const allowedAdmins = ['+919778256046', '+919633784512'];
+  const allowedAdmins = ['+919778256046', '+919633784512', '+919562828211'];
 
   useEffect(() => {
     // If already logged in as admin, redirect to admin dashboard
