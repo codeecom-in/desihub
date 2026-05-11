@@ -358,6 +358,12 @@ button {
   gap: 2rem;
 }
 
+@media (max-width: 992px) {
+  .cart-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Cart Item Styles */
 .cart-item {
   display: flex;

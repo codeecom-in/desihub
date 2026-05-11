@@ -56,6 +56,14 @@ const Cart = () => {
               </div>
             </div>
           ))}
+          
+          <button 
+            onClick={() => navigate('/')}
+            className="btn-primary" 
+            style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', marginTop: '0.5rem' }}
+          >
+            <Plus size={20} /> Add Another Product
+          </button>
         </div>
 
         <div className="glass-panel" style={{ padding: '2rem', height: 'fit-content', position: 'sticky', top: '100px' }}>
