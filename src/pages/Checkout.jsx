@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -11,9 +11,14 @@ const Checkout = () => {
   const navigate = useNavigate();
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const [selectedAddressId, setSelectedAddressId] = useState(
-    user?.addresses?.find((a) => a.isPrimary)?._id || user?.addresses?.[0]?._id
-  );
+  const [selectedAddress, setSelectedAddress] = useState(null);
+
+  useEffect(() => {
+    if (user?.addresses?.length > 0 && !selectedAddress) {
+      const defaultAddr = user.addresses.find((a) => a.isPrimary) || user.addresses[0];
+      setSelectedAddress(defaultAddr);
+    }
+  }, [user, selectedAddress]);
   const [submitting, setSubmitting] = useState(false);
 
   const loadRazorpayScript = () => {
@@ -39,7 +44,7 @@ const Checkout = () => {
   const handlePayment = async (e) => {
     e.preventDefault();
 
-    if (!selectedAddressId) {
+    if (!selectedAddress) {
       alert('Please select a delivery address to proceed.');
       return;
     }
@@ -68,7 +73,6 @@ const Checkout = () => {
 
       const razorpayOrderId = createOrderResponse.order.id;
       const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-      const selectedAddress = user?.addresses?.find((a) => a._id === selectedAddressId);
       
       const fullAddressString = `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state} - ${selectedAddress.pincode}`;
 
@@ -189,10 +193,10 @@ const Checkout = () => {
                       alignItems: 'flex-start', 
                       gap: '1rem', 
                       padding: '1rem', 
-                      border: selectedAddressId === address._id ? '2px solid var(--accent-color)' : '1px solid var(--border-color)', 
+                      border: selectedAddress?._id === address._id ? '2px solid var(--accent-color)' : '1px solid var(--border-color)', 
                       borderRadius: '8px', 
                       cursor: 'pointer',
-                      background: selectedAddressId === address._id ? 'rgba(200, 155, 79, 0.05)' : 'transparent',
+                      background: selectedAddress?._id === address._id ? 'rgba(200, 155, 79, 0.05)' : 'transparent',
                       transition: 'all 0.2s ease'
                     }}
                   >
@@ -201,11 +205,11 @@ const Checkout = () => {
                         type="radio" 
                         name="delivery_address" 
                         value={address._id} 
-                        checked={selectedAddressId === address._id} 
-                        onChange={() => setSelectedAddressId(address._id)} 
+                        checked={selectedAddress?._id === address._id} 
+                        onChange={() => setSelectedAddress(address)} 
                         style={{ display: 'none' }} 
                       />
-                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: selectedAddressId === address._id ? '6px solid var(--accent-color)' : '2px solid var(--border-color)' }}></div>
+                      <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: selectedAddress?._id === address._id ? '6px solid var(--accent-color)' : '2px solid var(--border-color)' }}></div>
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
