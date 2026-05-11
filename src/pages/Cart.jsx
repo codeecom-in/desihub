@@ -27,31 +27,33 @@ const Cart = () => {
       <div className="cart-grid">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {cart.map((item) => (
-            <div key={item._id} className="glass-panel" style={{ display: 'flex', padding: '1.5rem', gap: '1.5rem', alignItems: 'center' }}>
-              <img src={item.images?.[0] || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=500'} alt={item.name} style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '12px' }} />
+            <div key={item._id} className="glass-panel cart-item">
+              <img src={item.images?.[0] || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=500'} alt={item.name} className="cart-item-image" />
               
-              <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem' }}>{item.name}</h3>
-                <p style={{ color: 'var(--accent-color)', fontWeight: 700 }}>₹{item.price}</p>
+              <div className="cart-item-info">
+                <h3 className="cart-item-title">{item.name}</h3>
+                <p className="cart-item-price">₹{item.price}</p>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(0,0,0,0.05)', padding: '0.5rem', borderRadius: '50px' }}>
-                <button onClick={() => updateQuantity(item._id, Math.max(1, item.quantity - 1))} style={{ background: 'transparent', color: 'var(--text-primary)', padding: '0.2rem' }}>
-                  <Minus size={16} />
-                </button>
-                <span style={{ width: '20px', textAlign: 'center' }}>{item.quantity}</span>
-                <button onClick={() => updateQuantity(item._id, item.quantity + 1)} style={{ background: 'transparent', color: 'var(--text-primary)', padding: '0.2rem' }}>
-                  <Plus size={16} />
+              <div className="cart-item-actions">
+                <div className="cart-item-quantity">
+                  <button onClick={() => updateQuantity(item._id, Math.max(1, item.quantity - 1))} style={{ background: 'transparent', color: 'var(--text-primary)', padding: '0.2rem' }}>
+                    <Minus size={16} />
+                  </button>
+                  <span style={{ width: '20px', textAlign: 'center' }}>{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item._id, item.quantity + 1)} style={{ background: 'transparent', color: 'var(--text-primary)', padding: '0.2rem' }}>
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                <button 
+                  onClick={() => removeFromCart(item._id)}
+                  className="cart-item-delete"
+                  title="Remove"
+                >
+                  <Trash2 size={20} />
                 </button>
               </div>
-
-              <button 
-                onClick={() => removeFromCart(item._id)}
-                style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger-color)', padding: '0.75rem', borderRadius: '50%', display: 'flex' }}
-                title="Remove"
-              >
-                <Trash2 size={20} />
-              </button>
             </div>
           ))}
         </div>

@@ -137,10 +137,13 @@ const AdminLogin = () => {
               </div>
             </div>
 
+            {/* reCAPTCHA container */}
+            <div id="recaptcha-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem', marginBottom: '1rem' }}></div>
+
             <button
               type="submit"
               className="btn-primary"
-              style={{ width: '100%', padding: '1rem', marginTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              style={{ width: '100%', padding: '1rem', marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
               disabled={loading}
             >
               {loading ? 'Sending OTP...' : (
@@ -194,8 +197,6 @@ const AdminLogin = () => {
           </form>
         )}
 
-        {/* reCAPTCHA container */}
-        <div id="recaptcha-container" style={{ marginTop: '2rem' }}></div>
       </div>
     </div>
   );

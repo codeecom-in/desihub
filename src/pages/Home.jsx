@@ -7,6 +7,13 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const categories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))];
+  
+  const filteredProducts = selectedCategory === 'All' 
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
 
   useEffect(() => {
     axios.get(import.meta.env.VITE_API_URL + '/api/products')
@@ -39,8 +46,32 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div className="section-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginBottom: '2rem', gap: '1.5rem' }}>
         <h2 className="section-title" style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)', fontWeight: 600 }}>Latest Drops</h2>
+        
+        {!loading && !fetchError && categories.length > 1 && (
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {categories.map(category => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                style={{
+                  padding: '0.5rem 1.25rem',
+                  borderRadius: '999px',
+                  background: selectedCategory === category ? 'var(--accent-color)' : 'rgba(255,255,255,0.05)',
+                  color: selectedCategory === category ? '#fff' : 'var(--text-primary)',
+                  border: `1px solid ${selectedCategory === category ? 'var(--accent-color)' : 'var(--border-color)'}`,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  transition: 'all 0.2s ease',
+                  textTransform: 'capitalize'
+                }}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -53,7 +84,7 @@ const Home = () => {
         </div>
       ) : (
         <div className="product-grid">
-          {products.map((product) => (
+          {filteredProducts.map((product) => (
             <Link to={`/product/${product._id}`} key={product._id} className="glass-panel product-card">
               <img src={product.images?.[0] || 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&q=80&w=500'} alt={product.name} className="product-image" />
               <div className="product-info">

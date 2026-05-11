@@ -229,6 +229,10 @@ button {
   .main-content {
     padding: 1.5rem;
   }
+
+  .cart-grid, .checkout-form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -352,6 +356,93 @@ button {
   display: grid;
   grid-template-columns: 1fr 350px;
   gap: 2rem;
+}
+
+/* Cart Item Styles */
+.cart-item {
+  display: flex;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.cart-item-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.cart-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cart-item-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cart-item-price {
+  color: var(--accent-color);
+  font-weight: 700;
+}
+
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cart-item-quantity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(0,0,0,0.05);
+  padding: 0.5rem;
+  border-radius: 50px;
+}
+
+.cart-item-delete {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+  padding: 0.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 576px) {
+  .cart-item {
+    flex-wrap: wrap;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  .cart-item-image {
+    width: 80px;
+    height: 80px;
+  }
+  .cart-item-title {
+    font-size: 1rem;
+    white-space: normal;
+  }
+  .cart-item-info {
+    min-width: calc(100% - 96px); /* 80px img + 16px gap */
+  }
+  .cart-item-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+  }
+  .cart-item-quantity {
+    margin-left: 0;
+  }
 }
 
 .checkout-total {
@@ -744,5 +835,22 @@ html, body {
 
   .login-phone-field {
     border-radius: 0 0 8px 8px !important;
+  }
+}
+
+/* reCAPTCHA container styling */
+#recaptcha-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
+  width: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 380px) {
+  #recaptcha-container {
+    transform: scale(0.85);
+    transform-origin: center center;
   }
 }

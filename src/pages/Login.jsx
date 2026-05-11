@@ -212,6 +212,8 @@ const Login = () => {
                 />
               </div>
             </div>
+            {/* reCAPTCHA container for Firebase */}
+            <div id="recaptcha-container" style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem', marginBottom: '1rem' }}></div>
             <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '0.5rem', padding: '1rem' }} disabled={loading}>
               {loading ? 'Sending OTP...' : 'Send OTP'}
             </button>
@@ -308,9 +310,6 @@ const Login = () => {
           </div>
         )}
       </div>
-
-      {/* reCAPTCHA container for Firebase */}
-      <div id="recaptcha-container"></div>
     </div>
   );
 };
